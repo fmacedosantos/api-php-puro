@@ -28,9 +28,41 @@ class UserService
 
         } 
         catch (\PDOException $e) {
-            // "could not find driver"
 
-            if ($e->getMessage() === "could not find driver") {
+            if ($e->getCode() === 1049) {
+                return ['error' => 'We couldn\'t connect to the database.'];
+            }
+
+            if ($e->getCode() === "23000") {
+                return ['error' => 'User already exists.'];
+            }
+
+            return ['error' => $e->getMessage()];
+        }
+        catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function auth(array $data)
+    {
+        try {
+            $fields = Validator::validate([
+                'email'=> $data['email'] ?? '',
+                'password'=> $data['password'] ?? ''
+            ]);
+
+            $user = User::authentication($fields);
+
+            if (!$user) {
+                return ['error' => 'We couldn\'t authenticate you.'];
+            }
+
+            return $user;
+        } 
+        catch (\PDOException $e) {
+
+            if ($e->getCode() === 1049) {
                 return ['error' => 'We couldn\'t connect to the database.'];
             }
 
