@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\JWT;
 use App\Utils\Validator;
 use App\Models\User;
 
@@ -56,6 +57,40 @@ class UserService
 
             if (!$user) {
                 return ['error' => 'We couldn\'t authenticate you.'];
+            }
+
+            return JWT::generate($user);
+        } 
+        catch (\PDOException $e) {
+
+            if ($e->getCode() === 1049) {
+                return ['error' => 'We couldn\'t connect to the database.'];
+            }
+
+            return ['error' => $e->getMessage()];
+        }
+        catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function fetch(mixed $authorization)
+    {
+        try {
+            if (isset($authorization['error'])) {
+                return ['error' => $authorization['error']];
+            }
+            
+            $userFromJWT = JWT::verify($authorization);
+
+            if (!$userFromJWT) {
+                return ['error' => 'Plase, login to access this resource.'];
+            }
+
+            $user = User::find($userFromJWT['id']);
+
+            if (!$user) {
+                return ['error' => 'We couldn\'t create your account.'];
             }
 
             return $user;

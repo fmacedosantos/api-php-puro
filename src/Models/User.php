@@ -51,4 +51,18 @@ class User extends Database
             'email' => $user['email'],
         ];
     }
+
+    public static function find(int | string $id)
+    {
+        $pdo = self::getConnection();
+
+        $stmt = $pdo->prepare(
+            'SELECT id, name, email FROM users
+            WHERE id = ?' 
+        );
+
+        $stmt->execute([$id]);
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
 }
